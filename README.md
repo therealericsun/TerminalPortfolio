@@ -1,6 +1,8 @@
 # About
 
-A simple and lightweight terminal portfolio written in Astro.
+A simple and lightweight terminal-style portfolio written in Astro.
+
+![Terminal Portfolio Screenshot](public/screenshot.png)
 
 
 
