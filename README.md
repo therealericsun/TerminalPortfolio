@@ -1,10 +1,8 @@
 # About
 
-A simple and lightweight terminal-style portfolio written in Astro.
+A simple and lightweight terminal-style portfolio written in Astro, CSS, and Typescript. Supports the visitor typing commands to pull information from the profile.
 
 ![Terminal Portfolio Screenshot](public/screenshot.png)
-
-
 
 # Installation
 
