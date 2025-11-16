@@ -3,6 +3,5 @@ import { defineConfig } from 'astro/config';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://therealericsun.github.io',
-  base: '/TerminalPortfolio',
+  site: 'https://ericsun.net',
 });
