@@ -238,3 +238,14 @@ span.tab-hint {
     color: var(--text-color);
     opacity: 0.5;
 }
+
+.copyright {
+    position: fixed;
+    bottom: 20px;
+    right: 40px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 16px;
+    color: var(--text-color);
+    opacity: 0.6;
+    z-index: 1000;
+}

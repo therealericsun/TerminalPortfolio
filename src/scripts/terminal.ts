@@ -152,3 +152,9 @@ if (savedTheme === 'light') {
 // Theme switch event listeners
 lightModeBtn?.addEventListener('click', () => setTheme('light'));
 darkModeBtn?.addEventListener('click', () => setTheme('dark'));
+
+// Auto-update copyright year
+const yearElement = document.getElementById('current-year');
+if (yearElement) {
+    yearElement.textContent = new Date().getFullYear().toString();
+}
