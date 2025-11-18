@@ -1,4 +1,5 @@
 import { commands } from '../data/commands';
+import { parseCommand } from '../utils/commandParser';
 
 const output = document.getElementById('output');
 const input = document.getElementById('command-input') as HTMLInputElement;
@@ -7,7 +8,7 @@ let historyIndex = -1;
 let autocompleteElement: HTMLElement | null = null;
 
 async function executeCommand(cmd: string) {
-    const trimmedCmd = cmd.trim().toLowerCase();
+    const trimmedCmd = cmd.trim();
     
     // Remove autocomplete hint if present
     removeAutocomplete();
@@ -28,14 +29,17 @@ async function executeCommand(cmd: string) {
         commandHistory.unshift(cmd);
         historyIndex = -1;
 
+        // Parse command
+        const parsed = parseCommand(trimmedCmd);
+
         // Execute command
-        if (commands[trimmedCmd]) {
-            const result = await commands[trimmedCmd].execute();
+        if (commands[parsed.command]) {
+            const result = await commands[parsed.command].execute(parsed);
             if (result !== null) {
                 addOutput(result);
             }
         } else {
-            addOutput(`<span class="error">Command not found: ${cmd}</span>`);
+            addOutput(`<span class="error">Command not found: ${parsed.command}</span>`);
         }
     }
     

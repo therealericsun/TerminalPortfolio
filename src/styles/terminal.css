@@ -1,3 +1,35 @@
+@font-face {
+    font-family: 'IBM Plex Mono';
+    src: url('/fonts/IBMPlexMono-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'IBM Plex Mono';
+    src: url('/fonts/IBMPlexMono-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'IBM Plex Mono';
+    src: url('/fonts/IBMPlexMono-Medium.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'IBM Plex Mono';
+    src: url('/fonts/IBMPlexMono-SemiBold.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -16,7 +48,7 @@
 }
 
 :root.light-mode {
-    --bg-color: #eae4e4;
+    --bg-color: #e5d9d9;
     --text-color: #2C2C2C;
     --secondary-color: #2A7F81;
     --prompt-color: #8B5A3C;
@@ -29,7 +61,7 @@
 body {
     background-color: var(--bg-color);
     color: var(--text-color);
-    font-family: 'Courier New', Courier, monospace;
+    font-family: 'IBM Plex Mono', Consolas, Monaco, monospace;
     font-size: 16px;
     line-height: 1.6;
     min-height: 100vh;
@@ -238,7 +270,7 @@ span.tab-hint {
     position: fixed;
     top: 20px;
     right: 40px;
-    font-family: 'Courier New', Courier, monospace;
+    font-family: 'IBM Plex Mono', Consolas, Monaco, monospace;
     font-size: 16px;
     z-index: 1000;
 }
@@ -269,7 +301,7 @@ span.tab-hint {
     position: fixed;
     bottom: 20px;
     right: 40px;
-    font-family: 'Courier New', Courier, monospace;
+    font-family: 'IBM Plex Mono', Consolas, Monaco, monospace;
     font-size: 16px;
     color: var(--text-color);
     opacity: 0.6;
