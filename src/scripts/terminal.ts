@@ -16,9 +16,8 @@ async function executeCommand(cmd: string) {
     const commandLine = document.createElement('div');
     commandLine.className = 'output-line';
     const promptSpan = document.createElement('span');
-    promptSpan.className = 'prompt';
+    promptSpan.className = 'prompt history-prompt';
     promptSpan.textContent = 'visitor@portfolio:~$';
-    promptSpan.style.marginRight = '8px';
     commandLine.appendChild(promptSpan);
     commandLine.appendChild(document.createTextNode(cmd));
     output?.appendChild(commandLine);

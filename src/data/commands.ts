@@ -8,12 +8,12 @@ export const commands: Record<string, Command> = {
         description: 'Display available commands',
         execute: () => {
             return `<div class="panel-box">Available commands:<br>` +
-  `<span class="command">skills</span>     - View my technical skills<br>` +
-  `<span class="command">projects</span>   - See my projects<br>` +
-  `<span class="command">experience</span> - View my work experience<br>` +
-  `<span class="command">clear</span>      - Clear the terminal<br>` +
-  `<span class="command">contact</span>    - Get my contact information<br>` +
-  `<span class="command">help</span>       - Display this help message</div>`;
+  `<div class="help-item"><span class="command">skills</span><span class="help-dash">-</span><span class="help-desc">View my technical skills</span></div>` +
+  `<div class="help-item"><span class="command">projects</span><span class="help-dash">-</span><span class="help-desc">See my projects</span></div>` +
+  `<div class="help-item"><span class="command">experience</span><span class="help-dash">-</span><span class="help-desc">View my work experience</span></div>` +
+  `<div class="help-item"><span class="command">clear</span><span class="help-dash">-</span><span class="help-desc">Clear the terminal</span></div>` +
+  `<div class="help-item"><span class="command">contact</span><span class="help-dash">-</span><span class="help-desc">Get my contact information</span></div>` +
+  `<div class="help-item"><span class="command">help</span><span class="help-dash">-</span><span class="help-desc">Display this help message</span></div></div>`;
         }
     },
     skills: {

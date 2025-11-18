@@ -163,6 +163,7 @@ a:hover {
     line-height: 1.2;
     margin: 10px 0;
     white-space: pre;
+    display: inline-block;
 }
 
 .skill-item {
@@ -190,6 +191,31 @@ span.tab-hint {
     font-size: 0.9em;
     margin-top: 5px;
     margin-bottom: 5px;
+}
+
+.help-item {
+    display: flex;
+    align-items: baseline;
+    margin-bottom: 2px;
+}
+
+.help-item .command {
+    min-width: 120px;
+    display: inline-block;
+}
+
+.help-dash {
+    margin: 0 10px;
+    color: var(--text-color);
+}
+
+.help-desc {
+    flex: 1;
+    color: var(--text-color);
+}
+
+.history-prompt {
+    margin-right: 8px;
 }
 
 .panel-box {
@@ -248,4 +274,110 @@ span.tab-hint {
     color: var(--text-color);
     opacity: 0.6;
     z-index: 1000;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+    .terminal-container {
+        padding: 20px;
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+
+    /* Make ASCII art smaller on mobile but still readable */
+    .ascii-art {
+        font-size: 10px;
+        line-height: 1.1;
+        margin: 5px 0;
+        display: block;
+    }
+
+    /* Display ASCII art pieces with some spacing */
+    .ascii-art-eric {
+        margin-bottom: 5px;
+    }
+
+    .ascii-art-sun {
+        margin-top: 5px;
+    }
+
+    /* Make text span entire screen */
+    .output-line {
+        max-width: 100%;
+        width: 100%;
+    }
+
+    .intro-text {
+        max-width: 100%;
+        width: 100%;
+    }
+
+    .panel-box {
+        max-width: 100%;
+        width: 100%;
+        padding: 10px;
+    }
+
+    /* Adjust theme switch and copyright for mobile */
+    .theme-switch {
+        top: 10px;
+        right: 15px;
+        font-size: 14px;
+    }
+
+    .copyright {
+        bottom: 10px;
+        right: 15px;
+        font-size: 14px;
+    }
+
+    /* Make font size slightly smaller on mobile */
+    body {
+        font-size: 14px;
+    }
+
+    /* Adjust input line for mobile - keep on same line */
+    .input-line {
+        flex-wrap: nowrap;
+    }
+
+    .input-line .prompt {
+        flex-shrink: 0;
+        margin-right: 5px;
+    }
+
+    #command-input {
+        min-width: 0;
+    }
+
+    /* Truncate separator line to fit screen width */
+    .separator-line {
+        overflow: hidden;
+        white-space: nowrap;
+    }
+
+    /* Help command mobile layout */
+    .help-item {
+        flex-direction: column;
+        align-items: flex-start;
+        margin-bottom: 10px;
+    }
+
+    .help-item .command {
+        min-width: auto;
+        margin-bottom: 2px;
+    }
+
+    .help-dash {
+        display: none;
+    }
+
+    .help-desc {
+        padding-left: 10px;
+    }
+
+    /* Adjust history prompt spacing to match input line on mobile */
+    .history-prompt {
+        margin-right: 5px;
+    }
 }
