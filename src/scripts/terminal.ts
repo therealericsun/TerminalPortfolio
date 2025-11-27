@@ -254,24 +254,33 @@ input?.addEventListener('keydown', async (e: KeyboardEvent) => {
         
         // Extract the current command being typed (after last operator)
         const currentCmd = extractCurrentCommand(input.value);
-        const words = currentCmd.trim().split(/\s+/);
+        
+        // Check if we're on a new word (trailing space means we finished typing the previous word)
+        const hasTrailingSpace = currentCmd !== currentCmd.trimEnd();
+        const words = currentCmd.trim().split(/\s+/).filter(w => w.length > 0);
         
         // Check if we're autocompleting a filename (after 'cat' command)
-        if (words.length === 2 && words[0] === 'cat') {
-            const partial = words[1].toLowerCase();
-            const matches = fileNames.filter(file => file.toLowerCase().startsWith(partial));
-            
-            if (matches.length === 1) {
-                // Single match - autocomplete the filename
-                const beforeFilename = input.value.substring(0, input.value.lastIndexOf(words[1]));
-                input.value = beforeFilename + matches[0];
-                removeAutocomplete();
-            } else if (matches.length > 1) {
-                // Multiple matches - show them
-                showAutocomplete(matches);
+        if (words.length >= 1 && words[0] === 'cat') {
+            if (words.length === 1 && hasTrailingSpace) {
+                // "cat " - show all available files
+                showAutocomplete(fileNames);
+            } else if (words.length === 2) {
+                // "cat ski..." - autocomplete the filename
+                const partial = words[1].toLowerCase();
+                const matches = fileNames.filter(file => file.toLowerCase().startsWith(partial));
+                
+                if (matches.length === 1) {
+                    // Single match - autocomplete the filename
+                    const beforeFilename = input.value.substring(0, input.value.lastIndexOf(words[1]));
+                    input.value = beforeFilename + matches[0];
+                    removeAutocomplete();
+                } else if (matches.length > 1) {
+                    // Multiple matches - show them
+                    showAutocomplete(matches);
+                }
             }
-        } else if (words.length === 1) {
-            // Autocomplete command names
+        } else if (words.length === 1 && !hasTrailingSpace) {
+            // Autocomplete command names (only if not finishing with a space)
             const partial = words[0].toLowerCase();
             const matches = Object.keys(commands).filter(cmd => cmd.startsWith(partial));
             
