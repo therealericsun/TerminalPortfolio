@@ -2,7 +2,7 @@ import { commands, isRestrictedCommand, getRestrictedCommandError } from '../dat
 import { parseCommandLine, extractCurrentCommand } from '../utils/commandParser';
 import type { ParsedCommand } from '../utils/commandParser';
 
-// Available file names for autocomplete
+// Available file names for autocomplete (hidden files not included in autocomplete)
 const fileNames = ['skills.md', 'projects.md', 'experience.md', 'contact.md'];
 
 const output = document.getElementById('output');
@@ -262,7 +262,7 @@ input?.addEventListener('keydown', async (e: KeyboardEvent) => {
         // Check if we're autocompleting a filename (after 'cat' command)
         if (words.length >= 1 && words[0] === 'cat') {
             if (words.length === 1 && hasTrailingSpace) {
-                // "cat " - show all available files
+                // "cat " - show available files (hidden files not shown in autocomplete)
                 showAutocomplete(fileNames);
             } else if (words.length === 2) {
                 // "cat ski..." - autocomplete the filename

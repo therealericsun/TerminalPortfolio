@@ -16,6 +16,25 @@ const getFileSystem = (): Record<string, () => string | null | Promise<string | 
     'contact.md': () => commands.contact.execute(),
 });
 
+// Hidden files only shown with ls -a
+const hiddenFiles: Record<string, () => string | null | Promise<string | null>> = {
+    '.easter_egg.txt': () => `<pre style="font-family: inherit; line-height: 1.2; white-space: pre; margin: 5px 0;">     /\`\\   /\`\\
+    (/\\ \\-/ /\\)
+       )6 6(
+     &gt;{= Y =}&lt;
+      /'-^-'\\
+     (_)""-(_).
+    /*  ((*   *'.
+   |   *))  *   *\\
+   | *  ((*   *  /
+    \\  *))  *  .'
+     '-.((*_.-'
+
+ASCII art by Joan Stark (Spunk)
+
+Congratulations, you found the secret easter egg!</pre>`
+};
+
 // Restricted commands that should show a funny error
 const restrictedCommands = ['sudo', 'cd', 'rm', 'touch', 'mv', 'cp', 'mkdir', 'rmdir', 'chmod', 'chown'];
 
@@ -209,9 +228,16 @@ export const commands: Record<string, Command> = {
         }
     },
     ls: {
-        description: 'List available files',
-        execute: () => {
+        description: 'List available files (use -a to show hidden files)',
+        execute: (parsed?: ParsedCommand) => {
             const files = Object.keys(getFileSystem());
+            
+            // Check if -a flag is present to show hidden files
+            if (parsed?.flags?.a) {
+                const hiddenFileNames = Object.keys(hiddenFiles);
+                return [...files, ...hiddenFileNames].join('  ');
+            }
+            
             return files.join('  ');
         }
     },
@@ -225,11 +251,17 @@ export const commands: Record<string, Command> = {
             const filename = parsed.args[0];
             const fileSystem = getFileSystem();
             
+            // Check regular files first
             if (fileSystem[filename]) {
                 return await fileSystem[filename]();
-            } else {
-                return `<span class="error">cat: ${filename}: No such file or directory</span>`;
             }
+            
+            // Check hidden files
+            if (hiddenFiles[filename]) {
+                return await hiddenFiles[filename]();
+            }
+            
+            return `<span class="error">cat: ${filename}: No such file or directory</span>`;
         }
     },
     echo: {
