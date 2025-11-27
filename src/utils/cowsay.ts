@@ -32,20 +32,34 @@ export function cowsay(message: string): string {
 }
 
 function wrapText(text: string, maxWidth: number): string[] {
-    const words = text.split(' ');
-    const lines: string[] = [];
-    let currentLine = '';
+    // First, split by actual newlines to preserve intentional line breaks
+    const paragraphs = text.split('\n');
+    const allLines: string[] = [];
     
-    for (const word of words) {
-        if (currentLine.length + word.length + 1 <= maxWidth) {
-            currentLine += (currentLine ? ' ' : '') + word;
-        } else {
-            if (currentLine) lines.push(currentLine);
-            currentLine = word;
+    // Process each paragraph separately
+    for (const paragraph of paragraphs) {
+        const trimmed = paragraph.trim();
+        if (!trimmed) {
+            // Empty line - add as is
+            allLines.push('');
+            continue;
         }
+        
+        // Wrap this paragraph
+        const words = trimmed.split(' ');
+        let currentLine = '';
+        
+        for (const word of words) {
+            if (currentLine.length + word.length + 1 <= maxWidth) {
+                currentLine += (currentLine ? ' ' : '') + word;
+            } else {
+                if (currentLine) allLines.push(currentLine);
+                currentLine = word;
+            }
+        }
+        
+        if (currentLine) allLines.push(currentLine);
     }
     
-    if (currentLine) lines.push(currentLine);
-    
-    return lines.length > 0 ? lines : [''];
+    return allLines.length > 0 ? allLines : [''];
 }

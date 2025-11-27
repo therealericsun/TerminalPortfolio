@@ -1,7 +1,9 @@
-import { commands } from '../data/commands';
-import { parseCommand, parsePipedCommand } from '../utils/commandParser';
-import { getFortune } from '../utils/fortune';
-import { cowsay } from '../utils/cowsay';
+import { commands, isRestrictedCommand, getRestrictedCommandError } from '../data/commands';
+import { parseCommandLine, extractCurrentCommand } from '../utils/commandParser';
+import type { ParsedCommand } from '../utils/commandParser';
+
+// Available file names for autocomplete
+const fileNames = ['skills.md', 'projects.md', 'experience.md', 'contact.md'];
 
 const output = document.getElementById('output');
 const input = document.getElementById('command-input') as HTMLInputElement;
@@ -31,39 +33,168 @@ async function executeCommand(cmd: string) {
         commandHistory.unshift(cmd);
         historyIndex = -1;
 
-        // Parse command to check for pipes
-        const pipedResult = parsePipedCommand(trimmedCmd);
-
-        if (pipedResult.isPiped) {
-            // Handle piped commands
-            if (pipedResult.commands.length === 2 && 
-                pipedResult.commands[0].command === 'fortune' && 
-                pipedResult.commands[1].command === 'cowsay') {
-                // Execute fortune | cowsay
-                const fortuneText = getFortune();
-                const cowsayOutput = cowsay(fortuneText);
-                addOutput(`<pre style="font-family: inherit; font-size: 16px; line-height: 1.2; white-space: pre; margin: 5px 0;">${cowsayOutput}</pre>`);
-            } else {
-                // Unsupported pipe
-                addOutput(`<span class="error">Error: Piping is currently only supported between fortune and cowsay (usage: fortune | cowsay)</span>`);
-            }
-        } else {
-            // Execute single command normally
-            const parsed = pipedResult.commands[0];
-            
-            if (commands[parsed.command]) {
-                const result = await commands[parsed.command].execute(parsed);
-                if (result !== null) {
-                    addOutput(result);
-                }
-            } else {
-                addOutput(`<span class="error">Command not found: ${parsed.command}</span>`);
-            }
+        // Check for redirection operators (>, >>, <)
+        if (/[<>]/.test(trimmedCmd)) {
+            addOutput(getRestrictedCommandError('redirection'));
+            window.scrollTo(0, document.body.scrollHeight);
+            return;
         }
+
+        // Parse command line with support for chaining
+        const parsedLine = parseCommandLine(trimmedCmd);
+
+        // Execute the command chain
+        await executeCommandChain(parsedLine.chains);
     }
     
     // Scroll to bottom
     window.scrollTo(0, document.body.scrollHeight);
+}
+
+async function executeCommandChain(chains: Array<{ command: ParsedCommand; operator?: string }>) {
+    let previousOutput: string | null = null;
+    
+    for (let i = 0; i < chains.length; i++) {
+        const chain = chains[i];
+        const parsed = chain.command;
+        const operator = chain.operator;
+        
+        // Check if this command's output will be piped to another command
+        const willBePiped = operator === '|';
+        
+        // Handle pipe operator - pass previous output to next command
+        if (i > 0 && chains[i - 1].operator === '|') {
+            // For pipe operations, modify the command based on what's being piped
+            if (previousOutput !== null) {
+                // First check if the command exists
+                if (!commands[parsed.command]) {
+                    addOutput(`<span class="error">Command not found: ${parsed.command}</span>`);
+                    return;
+                }
+                
+                if (parsed.command === 'cowsay' || parsed.command === 'echo') {
+                    // Special handling for commands that accept piped input
+                    // Strip HTML tags and preserve line breaks from previous output
+                    const textOnly = stripHtmlTagsPreserveLineBreaks(previousOutput);
+                    const result = await executeSingleCommand(parsed, textOnly);
+                    previousOutput = result;
+                    
+                    // Only display if this is the final command (not being piped further)
+                    if (result !== null && !willBePiped) {
+                        addOutput(result);
+                    }
+                } else {
+                    // For other commands, piping is not supported
+                    addOutput(`<span class="error">Error: Command '${parsed.command}' does not support piped input</span>`);
+                    return;
+                }
+            }
+        } else {
+            // For non-piped commands (first command, or after ;, &&, ||)
+            const result = await executeSingleCommand(parsed);
+            previousOutput = result;
+            
+            // Only display output if it's not being piped to another command
+            if (result !== null && !willBePiped) {
+                addOutput(result);
+            }
+        }
+        
+        // For sequence operators (;, &&, ||), just continue to next command
+        // Since we don't really have command failures, they all behave the same
+        // In a real terminal, && would only continue on success, || only on failure
+    }
+}
+
+async function executeSingleCommand(parsed: ParsedCommand, pipedInput?: string): Promise<string | null> {
+    // Check for restricted commands first
+    if (isRestrictedCommand(parsed.command)) {
+        return getRestrictedCommandError(parsed.command);
+    }
+    
+    if (commands[parsed.command]) {
+        // If there's piped input, we may need to modify the parsed command
+        if (pipedInput !== undefined) {
+            // For cowsay and echo, replace args with piped input
+            if (parsed.command === 'cowsay' || parsed.command === 'echo') {
+                const modifiedParsed = {
+                    ...parsed,
+                    args: [pipedInput]
+                };
+                return await commands[parsed.command].execute(modifiedParsed);
+            }
+        }
+        
+        return await commands[parsed.command].execute(parsed);
+    } else {
+        return `<span class="error">Command not found: ${parsed.command}</span>`;
+    }
+}
+
+function stripHtmlTags(html: string): string {
+    // Create a temporary div to parse HTML
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || '';
+}
+
+function stripHtmlTagsPreserveLineBreaks(html: string): string {
+    // Create a temporary div to parse HTML
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    
+    const lines: string[] = [];
+    
+    // Process each top-level child as a separate line/block
+    const processElement = (element: Element): string => {
+        let text = '';
+        
+        // Walk through all child nodes and collect text
+        const collectText = (node: Node) => {
+            if (node.nodeType === Node.TEXT_NODE) {
+                const content = (node.textContent || '').trim();
+                if (content) {
+                    // Add space before if we already have content
+                    if (text && !text.endsWith(' ')) {
+                        text += ' ';
+                    }
+                    text += content;
+                }
+            } else if (node.nodeType === Node.ELEMENT_NODE) {
+                const el = node as Element;
+                // For BR tags, add explicit line break
+                if (el.tagName === 'BR') {
+                    text += '\n';
+                } else {
+                    // Process children
+                    Array.from(el.childNodes).forEach(child => collectText(child));
+                }
+            }
+        };
+        
+        collectText(element);
+        return text;
+    };
+    
+    // Process each top-level element
+    Array.from(tmp.children).forEach(child => {
+        const text = processElement(child);
+        if (text.trim()) {
+            // Split by explicit line breaks (from BR tags)
+            const subLines = text.split('\n').map(line => line.trim()).filter(line => line);
+            lines.push(...subLines);
+        }
+    });
+    
+    // If there are no children, just get the text content
+    if (lines.length === 0) {
+        const text = tmp.textContent?.trim() || '';
+        if (text) {
+            lines.push(text);
+        }
+    }
+    
+    return lines.join('\n');
 }
 
 function addOutput(text: string) {
@@ -120,13 +251,40 @@ input?.addEventListener('keydown', async (e: KeyboardEvent) => {
         }
     } else if (e.key === 'Tab') {
         e.preventDefault();
-        const partial = input.value.toLowerCase();
-        const matches = Object.keys(commands).filter(cmd => cmd.startsWith(partial));
-        if (matches.length === 1) {
-            input.value = matches[0];
-            removeAutocomplete();
-        } else if (matches.length > 1) {
-            showAutocomplete(matches);
+        
+        // Extract the current command being typed (after last operator)
+        const currentCmd = extractCurrentCommand(input.value);
+        const words = currentCmd.trim().split(/\s+/);
+        
+        // Check if we're autocompleting a filename (after 'cat' command)
+        if (words.length === 2 && words[0] === 'cat') {
+            const partial = words[1].toLowerCase();
+            const matches = fileNames.filter(file => file.toLowerCase().startsWith(partial));
+            
+            if (matches.length === 1) {
+                // Single match - autocomplete the filename
+                const beforeFilename = input.value.substring(0, input.value.lastIndexOf(words[1]));
+                input.value = beforeFilename + matches[0];
+                removeAutocomplete();
+            } else if (matches.length > 1) {
+                // Multiple matches - show them
+                showAutocomplete(matches);
+            }
+        } else if (words.length === 1) {
+            // Autocomplete command names
+            const partial = words[0].toLowerCase();
+            const matches = Object.keys(commands).filter(cmd => cmd.startsWith(partial));
+            
+            if (matches.length === 1) {
+                // Single match - autocomplete it
+                // Replace the current command part with the match
+                const beforeCmd = input.value.substring(0, input.value.length - currentCmd.length);
+                input.value = beforeCmd + matches[0];
+                removeAutocomplete();
+            } else if (matches.length > 1) {
+                // Multiple matches - show them
+                showAutocomplete(matches);
+            }
         }
     } else {
         // Remove autocomplete on any other key

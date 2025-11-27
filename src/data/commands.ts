@@ -8,15 +8,32 @@ export interface Command {
     execute: (parsed?: ParsedCommand) => string | null | Promise<string | null>;
 }
 
+// File system mapping - lazy loaded to avoid circular dependency
+const getFileSystem = (): Record<string, () => string | null | Promise<string | null>> => ({
+    'skills.md': () => commands.skills.execute(),
+    'projects.md': () => commands.projects.execute(),
+    'experience.md': () => commands.experience.execute(),
+    'contact.md': () => commands.contact.execute(),
+});
+
+// Restricted commands that should show a funny error
+const restrictedCommands = ['sudo', 'cd', 'rm', 'touch', 'mv', 'cp', 'mkdir', 'rmdir', 'chmod', 'chown'];
+
 export const commands: Record<string, Command> = {
     help: {
         description: 'Display available commands',
         execute: () => {
             return `<div class="panel-box">` +
+  `<span class="section-heading">Shortcuts:</span><br>` +
   `<div class="help-item"><span class="command">skills</span><span class="help-dash">-</span><span class="help-desc">View my technical skills</span></div>` +
   `<div class="help-item"><span class="command">projects</span><span class="help-dash">-</span><span class="help-desc">See my projects</span></div>` +
   `<div class="help-item"><span class="command">experience</span><span class="help-dash">-</span><span class="help-desc">View my work experience</span></div>` +
-  `<div class="help-item"><span class="command">contact</span><span class="help-dash">-</span><span class="help-desc">Get my contact information</span></div>` +
+  `<div class="help-item"><span class="command">contact</span><span class="help-dash">-</span><span class="help-desc">Get my contact information</span></div></div>` +
+  `<div class="panel-box">` +
+  `<span class="section-heading">Commands:</span><br>` +
+  `<div class="help-item"><span class="command">ls</span><span class="help-dash">-</span><span class="help-desc">List available files</span></div>` +
+  `<div class="help-item"><span class="command">cat</span><span class="help-dash">-</span><span class="help-desc">Display file contents (usage: cat [file])</span></div>` +
+  `<div class="help-item"><span class="command">echo</span><span class="help-dash">-</span><span class="help-desc">Print text to output (usage: echo [text])</span></div>` +
   `<div class="help-item"><span class="command">bonsai</span><span class="help-dash">-</span><span class="help-desc">Generate an ASCII bonsai inspired by cbonsai (-s to set seed) [<a href="https://github.com/mhzawadi/homebrew-cbonsai" target="_blank">info</a>]</span></div>` +
   `<div class="help-item"><span class="command">fortune</span><span class="help-dash">-</span><span class="help-desc">Display a random programming quote [<a href="https://en.wikipedia.org/wiki/Fortune_(Unix)" target="_blank">info</a>]</span></div>` +
   `<div class="help-item"><span class="command">cowsay</span><span class="help-dash">-</span><span class="help-desc">Make a cow say something (usage: cowsay [message]) [<a href="https://en.wikipedia.org/wiki/Cowsay" target="_blank">info</a>]</span></div>` +
@@ -191,4 +208,58 @@ export const commands: Record<string, Command> = {
             return null;
         }
     },
+    ls: {
+        description: 'List available files',
+        execute: () => {
+            const files = Object.keys(getFileSystem());
+            return files.join('  ');
+        }
+    },
+    cat: {
+        description: 'Display file contents',
+        execute: async (parsed?: ParsedCommand) => {
+            if (!parsed?.args || parsed.args.length === 0) {
+                return `<span class="error">cat: missing file operand</span>`;
+            }
+            
+            const filename = parsed.args[0];
+            const fileSystem = getFileSystem();
+            
+            if (fileSystem[filename]) {
+                return await fileSystem[filename]();
+            } else {
+                return `<span class="error">cat: ${filename}: No such file or directory</span>`;
+            }
+        }
+    },
+    echo: {
+        description: 'Print text to output',
+        execute: (parsed?: ParsedCommand) => {
+            if (!parsed?.args || parsed.args.length === 0) {
+                return '';
+            }
+            
+            const text = parsed.args.join(' ');
+            // Split by newlines and wrap each line separately
+            const lines = text.split('\n');
+            return lines.join('\n');
+        }
+    },
 };
+
+// Export function to check for restricted commands
+export function isRestrictedCommand(cmd: string): boolean {
+    return restrictedCommands.includes(cmd);
+}
+
+export function getRestrictedCommandError(cmd: string): string {
+    const messages = [
+        `Nice try! But you can't do that here.`,
+        `Whoa there! You can't do that here. Try 'help' instead.`,
+        `Nope! That's off-limits. Is that how you treat somebody else's server?`,
+    ];
+    
+    // Pick a random message
+    const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+    return `<span class="error">${cmd}: ${randomMessage}</span>`;
+}
